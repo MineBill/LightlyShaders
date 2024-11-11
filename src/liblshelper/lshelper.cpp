@@ -245,6 +245,7 @@ namespace Lightly {
                  || w->windowClass().contains("ulauncher", Qt::CaseInsensitive)
                  || w->windowClass().contains("ksplash", Qt::CaseInsensitive)
                  || w->windowClass().contains("ksmserver", Qt::CaseInsensitive)
+                 || w->windowClass().contains("sourcegit", Qt::CaseInsensitive)
                  || (w->windowClass().contains("reaper", Qt::CaseInsensitive) && !hasShadow(w))
              )
             )
