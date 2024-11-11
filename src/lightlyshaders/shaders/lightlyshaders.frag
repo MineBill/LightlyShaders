@@ -439,12 +439,7 @@ void main()
 
     outColor = sourceEncodingToNitsInDestinationColorspace(outColor);
 
-    //Support opacity
-    if (saturation != 1.0) {
-        vec3 desaturated = outColor.rgb * vec3( 0.30, 0.59, 0.11 );
-        desaturated = vec3( dot( desaturated, outColor.rgb ));
-        outColor.rgb = outColor.rgb * vec3( saturation ) + desaturated * vec3( 1.0 - saturation );
-    }
+    outColor.rgb *= vec3(saturation);
     outColor *= modulation;
 
     //Output result
