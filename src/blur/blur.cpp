@@ -62,7 +62,11 @@ namespace Lightly {
 
         m_helper = new LSHelper();
 
-        m_downsamplePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(KWin::ShaderTrait::MapTexture, QStringLiteral(":/KWin::effects/blur/shaders/vertex.vert"), QStringLiteral(":/KWin::effects/blur/shaders/downsample.frag"));
+        m_downsamplePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(
+            KWin::ShaderTrait::MapTexture,
+            QStringLiteral(":/effects/blur/shaders/vertex.vert"),
+            QStringLiteral(":/effects/blur/shaders/downsample.frag")
+        );
         if (!m_downsamplePass.shader) {
             qCWarning(KWIN_BLUR) << "Failed to load downsampling pass shader";
             return;
@@ -71,7 +75,11 @@ namespace Lightly {
         m_downsamplePass.offsetLocation = m_downsamplePass.shader->uniformLocation("offset");
         m_downsamplePass.halfpixelLocation = m_downsamplePass.shader->uniformLocation("halfpixel");
 
-        m_upsamplePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(KWin::ShaderTrait::MapTexture, QStringLiteral(":/KWin::effects/blur/shaders/vertex.vert"), QStringLiteral(":/KWin::effects/blur/shaders/upsample.frag"));
+        m_upsamplePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(
+            KWin::ShaderTrait::MapTexture,
+            QStringLiteral(":/effects/blur/shaders/vertex.vert"),
+            QStringLiteral(":/effects/blur/shaders/upsample.frag")
+        );
         if (!m_upsamplePass.shader) {
             qCWarning(KWIN_BLUR) << "Failed to load upsampling pass shader";
             return;
@@ -80,7 +88,11 @@ namespace Lightly {
         m_upsamplePass.offsetLocation = m_upsamplePass.shader->uniformLocation("offset");
         m_upsamplePass.halfpixelLocation = m_upsamplePass.shader->uniformLocation("halfpixel");
 
-        m_noisePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(KWin::ShaderTrait::MapTexture, QStringLiteral(":/KWin::effects/blur/shaders/vertex.vert"), QStringLiteral(":/KWin::effects/blur/shaders/noise.frag"));
+        m_noisePass.shader = KWin::ShaderManager::instance()->generateShaderFromFile(
+            KWin::ShaderTrait::MapTexture,
+            QStringLiteral(":/effects/blur/shaders/vertex.vert"),
+            QStringLiteral(":/effects/blur/shaders/noise.frag")
+        );
         if (!m_noisePass.shader) {
             qCWarning(KWIN_BLUR) << "Failed to load noise pass shader";
             return;
