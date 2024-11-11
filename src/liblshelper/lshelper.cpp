@@ -215,6 +215,7 @@ namespace Lightly {
     bool LSHelper::isManagedWindow(KWin::EffectWindow const* w)
     {
         if (w->isDesktop()
+            || (!w->isManaged())
             || w->isFullScreen()
             || w->isPopupMenu()
             || w->isTooltip()
