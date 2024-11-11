@@ -8,12 +8,11 @@
 
 Q_LOGGING_CATEGORY(LSHELPER, "liblshelper", QtWarningMsg)
 
-namespace KWin {
+namespace Lightly {
     LSHelper::LSHelper()
-        : QObject()
     {
         for (int i = 0; i < NTex; ++i) {
-            m_maskRegions[i] = 0;
+            maskedRegions[i] = 0;
         }
     }
 
@@ -21,8 +20,8 @@ namespace KWin {
     {
         // delete mask regions
         for (int i = 0; i < NTex; ++i) {
-            if (m_maskRegions[i])
-                delete m_maskRegions[i];
+            if (maskedRegions[i])
+                delete maskedRegions[i];
         }
 
         m_managed.clear();
@@ -45,7 +44,7 @@ namespace KWin {
         setMaskRegions();
     }
 
-    int LSHelper::roundness()
+    int LSHelper::roundness() const
     {
         return m_size;
     }
@@ -55,10 +54,10 @@ namespace KWin {
         int size = m_size + m_shadowOffset;
         QImage img = genMaskImg(size, true, false);
 
-        m_maskRegions[TopLeft] = createMaskRegion(img, size, TopLeft);
-        m_maskRegions[TopRight] = createMaskRegion(img, size, TopRight);
-        m_maskRegions[BottomRight] = createMaskRegion(img, size, BottomRight);
-        m_maskRegions[BottomLeft] = createMaskRegion(img, size, BottomLeft);
+        maskedRegions[TopLeft] = createMaskRegion(img, size, TopLeft);
+        maskedRegions[TopRight] = createMaskRegion(img, size, TopRight);
+        maskedRegions[BottomRight] = createMaskRegion(img, size, BottomRight);
+        maskedRegions[BottomLeft] = createMaskRegion(img, size, BottomLeft);
     }
 
     QRegion* LSHelper::createMaskRegion(QImage img, int size, int corner)
@@ -86,7 +85,7 @@ namespace KWin {
         return new QRegion(bitmap);
     }
 
-    void LSHelper::roundBlurRegion(EffectWindow* w, QRegion* blur_region)
+    void LSHelper::roundBlurRegion(KWin::EffectWindow* w, QRegion* blur_region)
     {
         if (blur_region->isEmpty()) {
             return;
@@ -98,24 +97,24 @@ namespace KWin {
 
         QRectF const geo(w->frameGeometry());
 
-        QRectF maximized_area = effects->clientArea(MaximizeArea, w);
+        QRectF maximized_area = KWin::effects->clientArea(KWin::MaximizeArea, w);
         if (maximized_area == geo && m_disabledForMaximized) {
             return;
         }
 
-        QRegion top_left = *m_maskRegions[TopLeft];
+        QRegion top_left = *maskedRegions[TopLeft];
         top_left.translate(0 - m_shadowOffset + 1, 0 - m_shadowOffset + 1);
         *blur_region = blur_region->subtracted(top_left);
 
-        QRegion top_right = *m_maskRegions[TopRight];
+        QRegion top_right = *maskedRegions[TopRight];
         top_right.translate(geo.width() - m_size - 1, 0 - m_shadowOffset + 1);
         *blur_region = blur_region->subtracted(top_right);
 
-        QRegion bottom_right = *m_maskRegions[BottomRight];
+        QRegion bottom_right = *maskedRegions[BottomRight];
         bottom_right.translate(geo.width() - m_size - 1, geo.height() - m_size - 1);
         *blur_region = blur_region->subtracted(bottom_right);
 
-        QRegion bottom_left = *m_maskRegions[BottomLeft];
+        QRegion bottom_left = *maskedRegions[BottomLeft];
         bottom_left.translate(0 - m_shadowOffset + 1, geo.height() - m_size - 1);
         *blur_region = blur_region->subtracted(bottom_left);
     }
@@ -206,14 +205,14 @@ namespace KWin {
         return img;
     }
 
-    bool LSHelper::hasShadow(EffectWindow* w)
+    bool LSHelper::hasShadow(KWin::EffectWindow const* w)
     {
         if (w->expandedGeometry().size() != w->frameGeometry().size())
             return true;
         return false;
     }
 
-    bool LSHelper::isManagedWindow(EffectWindow* w)
+    bool LSHelper::isManagedWindow(KWin::EffectWindow const* w)
     {
         if (w->isDesktop()
             || w->isFullScreen()
@@ -264,14 +263,14 @@ namespace KWin {
         return true;
     }
 
-    void LSHelper::blurWindowAdded(EffectWindow* w)
+    void LSHelper::blurWindowAdded(KWin::EffectWindow* w)
     {
         if (isManagedWindow(w)) {
             m_managed.append(w);
         }
     }
 
-    void LSHelper::blurWindowDeleted(EffectWindow* w)
+    void LSHelper::blurWindowDeleted(KWin::EffectWindow* w)
     {
         if (m_managed.contains(w)) {
             m_managed.removeAll(w);

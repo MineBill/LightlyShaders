@@ -11,47 +11,51 @@ int signum(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-namespace KWin {
+namespace Lightly {
     class LIBLSHELPER_EXPORT LSHelper : public QObject {
         Q_OBJECT
 
     public:
         LSHelper();
 
-        ~LSHelper();
+        ~LSHelper() override;
 
         void reconfigure();
 
         QPainterPath superellipse(float size, int n, int translate);
         QImage genMaskImg(int size, bool mask, bool outer_rect);
 
-        void roundBlurRegion(EffectWindow* w, QRegion* region);
-        bool isManagedWindow(EffectWindow* w);
-        void blurWindowAdded(EffectWindow* w);
-        void blurWindowDeleted(EffectWindow* w);
+        void roundBlurRegion(KWin::EffectWindow* w, QRegion* region);
+        bool isManagedWindow(KWin::EffectWindow const* w);
+        void blurWindowAdded(KWin::EffectWindow* w);
+        void blurWindowDeleted(KWin::EffectWindow* w);
 
-        int roundness();
+        int roundness() const;
 
-        enum { RoundedCorners = 0,
-               SquircledCorners };
+        enum {
+            RoundedCorners = 0,
+            SquircledCorners
+        };
 
-        enum { TopLeft = 0,
-               TopRight,
-               BottomRight,
-               BottomLeft,
-               NTex };
+        enum {
+            TopLeft = 0,
+            TopRight,
+            BottomRight,
+            BottomLeft,
+            NTex
+        };
 
-        QRegion* m_maskRegions[NTex];
+        QRegion* maskedRegions[NTex];
 
     private:
-        bool hasShadow(EffectWindow* w);
+        bool hasShadow(KWin::EffectWindow const* w);
 
         void setMaskRegions();
 
         QRegion* createMaskRegion(QImage img, int size, int corner);
 
-        int m_size, m_cornersType, m_squircleRatio, m_shadowOffset;
-        bool m_disabledForMaximized;
-        QList<EffectWindow*> m_managed;
+        int m_size {}, m_cornersType {}, m_squircleRatio {}, m_shadowOffset {};
+        bool m_disabledForMaximized {};
+        QList<KWin::EffectWindow*> m_managed {};
     };
 } // namespace

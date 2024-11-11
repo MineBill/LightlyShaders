@@ -8,14 +8,14 @@
 
 #include <KPluginFactory>
 
-namespace KWin {
+namespace Lightly {
     K_PLUGIN_CLASS(LightlyShadersKCM)
 
     LightlyShadersKCM::LightlyShadersKCM(QObject* parent, KPluginMetaData const& data)
         : KCModule(parent, data)
     {
-        ui.setupUi(widget());
-        addConfig(LightlyShadersConfig::self(), widget());
+        ui.setupUi(KCModule::widget());
+        addConfig(LightlyShadersConfig::self(), KCModule::widget());
 
         if (ui.kcfg_CornersType->currentIndex() == LSHelper::SquircledCorners) {
             ui.kcfg_SquircleRatio->setEnabled(true);
@@ -48,7 +48,7 @@ namespace KWin {
         LightlyShadersConfig::self()->setDefaults();
     }
 
-    void LightlyShadersKCM::updateChanged()
+    void LightlyShadersKCM::updateChanged() const
     {
         if (ui.kcfg_CornersType->currentIndex() == LSHelper::SquircledCorners) {
             ui.kcfg_SquircleRatio->setEnabled(true);

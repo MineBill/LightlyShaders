@@ -6,15 +6,15 @@
 
 #include "blur.h"
 
-namespace KWin
+namespace Lightly
 {
 
-KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(BlurEffect,
+KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(Lightly::BlurEffect,
                                       "metadata.json",
-                                      return BlurEffect::supported();
+                                      return Lightly::BlurEffect::supported();
                                       ,
-                                      return BlurEffect::enabledByDefault();)
+                                      return Lightly::BlurEffect::enabledByDefault();)
 
-} // namespace KWin
+} // namespace Lightly
 
 #include "main.moc"

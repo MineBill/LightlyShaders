@@ -19,18 +19,11 @@
 
 #include "lightlyshaders.h"
 #include "lightlyshaders_config.h"
-#include <KConfigGroup>
 #include <KWindowEffects>
-#include <QBitmap>
 #include <QFile>
 #include <QImage>
-#include <QMatrix4x4>
 #include <QPainter>
-#include <QPainterPath>
-#include <QRegularExpression>
-#include <QStandardPaths>
 #include <QTextStream>
-#include <QWindow>
 #include <core/renderviewport.h>
 #include <effect/effect.h>
 #include <opengl/glutils.h>
@@ -44,7 +37,17 @@ static void ensureResources()
     Q_INIT_RESOURCE(lightlyshaders);
 }
 
-namespace KWin {
+QRectF scale(QRectF const& rect, qreal scaleFactor)
+{
+    return QRectF(
+        rect.x() * scaleFactor,
+        rect.y() * scaleFactor,
+        rect.width() * scaleFactor,
+        rect.height() * scaleFactor
+    );
+}
+
+namespace Lightly {
     KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(LightlyShadersEffect, "lightlyshaders.json", return LightlyShadersEffect::supported();, return LightlyShadersEffect::enabledByDefault();)
 
     LightlyShadersEffect::LightlyShadersEffect()
@@ -53,12 +56,13 @@ namespace KWin {
         ensureResources();
 
         m_helper = new LSHelper();
-        reconfigure(ReconfigureAll);
+        LightlyShadersEffect::reconfigure(ReconfigureAll);
 
-        m_shader = std::unique_ptr<GLShader>(ShaderManager::instance()->generateShaderFromFile(
-            ShaderTrait::MapTexture, QStringLiteral(""),
+        m_shader = KWin::ShaderManager::instance()->generateShaderFromFile(
+            KWin::ShaderTrait::MapTexture,
+            QStringLiteral(""),
             QStringLiteral(":/effects/lightlyshaders/shaders/lightlyshaders.frag")
-        ));
+        );
 
         if (!m_shader) {
             qCWarning(LIGHTLYSHADERS) << "Failed to load shader";
@@ -66,13 +70,13 @@ namespace KWin {
         }
 
         if (m_shader->isValid()) {
-            auto const stackingOrder = effects->stackingOrder();
-            for (EffectWindow* window : stackingOrder) {
+            auto const stackingOrder = KWin::effects->stackingOrder();
+            for (KWin::EffectWindow* window : stackingOrder) {
                 windowAdded(window);
             }
 
-            connect(effects, &EffectsHandler::windowAdded, this, &LightlyShadersEffect::windowAdded);
-            connect(effects, &EffectsHandler::windowDeleted, this, &LightlyShadersEffect::windowDeleted);
+            connect(KWin::effects, &KWin::EffectsHandler::windowAdded, this, &LightlyShadersEffect::windowAdded);
+            connect(KWin::effects, &KWin::EffectsHandler::windowDeleted, this, &LightlyShadersEffect::windowDeleted);
 
             qCWarning(LIGHTLYSHADERS) << "LightlyShaders loaded.";
         } else
@@ -84,57 +88,57 @@ namespace KWin {
         m_windows.clear();
     }
 
-    void LightlyShadersEffect::windowDeleted(EffectWindow* w)
+    void LightlyShadersEffect::windowDeleted(KWin::EffectWindow* window)
     {
-        m_windows.remove(w);
+        m_windows.remove(window);
     }
 
-    void LightlyShadersEffect::windowAdded(EffectWindow* w)
+    void LightlyShadersEffect::windowAdded(KWin::EffectWindow* window)
     {
-        m_windows[w].isManaged = false;
+        m_windows[window].isManaged = false;
 
-        if (!m_helper->isManagedWindow(w))
+        if (!m_helper->isManagedWindow(window))
             return;
 
-        m_windows[w].isManaged = true;
-        m_windows[w].skipEffect = false;
+        m_windows[window].isManaged = true;
+        m_windows[window].skipEffect = false;
 
-        connect(w, &EffectWindow::windowMaximizedStateChanged, this, &LightlyShadersEffect::windowMaximizedStateChanged);
-        connect(w, &EffectWindow::windowFullScreenChanged, this, &LightlyShadersEffect::windowFullScreenChanged);
+        connect(window, &KWin::EffectWindow::windowMaximizedStateChanged, this, &LightlyShadersEffect::windowMaximizedStateChanged);
+        connect(window, &KWin::EffectWindow::windowFullScreenChanged, this, &LightlyShadersEffect::windowFullScreenChanged);
 
-        QRectF maximized_area = effects->clientArea(MaximizeArea, w);
-        if (maximized_area == w->frameGeometry() && m_disabledForMaximized)
-            m_windows[w].skipEffect = true;
+        QRectF maximized_area = KWin::effects->clientArea(KWin::MaximizeArea, window);
+        if (maximized_area == window->frameGeometry() && m_disabledForMaximized)
+            m_windows[window].skipEffect = true;
 
-        redirect(w);
-        setShader(w, m_shader.get());
+        redirect(window);
+        setShader(window, m_shader.get());
     }
 
-    void LightlyShadersEffect::windowFullScreenChanged(EffectWindow* w)
+    void LightlyShadersEffect::windowFullScreenChanged(KWin::EffectWindow* window)
     {
-        if (w->isFullScreen()) {
-            m_windows[w].isManaged = false;
+        if (window->isFullScreen()) {
+            m_windows[window].isManaged = false;
         } else {
-            m_windows[w].isManaged = true;
+            m_windows[window].isManaged = true;
         }
     }
 
-    void LightlyShadersEffect::windowMaximizedStateChanged(EffectWindow* w, bool horizontal, bool vertical)
+    void LightlyShadersEffect::windowMaximizedStateChanged(KWin::EffectWindow* window, bool horizontal, bool vertical)
     {
         if (!m_disabledForMaximized)
             return;
 
         if ((horizontal == true) && (vertical == true)) {
-            m_windows[w].skipEffect = true;
+            m_windows[window].skipEffect = true;
         } else {
-            m_windows[w].skipEffect = false;
+            m_windows[window].skipEffect = false;
         }
     }
 
-    void LightlyShadersEffect::setRoundness(int const r, Output* s)
+    void LightlyShadersEffect::setRoundness(int const r, KWin::Output* s)
     {
         m_size = r;
-        m_screens[s].sizeScaled = float(r) * m_screens[s].scale;
+        m_screens[s].sizeScaled = static_cast<float>(r) * m_screens[s].scale;
         m_corner = QSize(m_size + (m_shadowOffset - 1), m_size + (m_shadowOffset - 1));
     }
 
@@ -169,22 +173,22 @@ namespace KWin {
             m_outerOutlineWidth = 0.0;
         }
 
-        auto const screens = effects->screens();
-        for (Output* s : screens) {
-            if (effects->waylandDisplay() == nullptr) {
+        auto const screens = KWin::effects->screens();
+        for (KWin::Output* s : screens) {
+            if (KWin::effects->waylandDisplay() == nullptr) {
                 s = nullptr;
             }
             setRoundness(m_roundness, s);
 
-            if (effects->waylandDisplay() == nullptr) {
+            if (KWin::effects->waylandDisplay() == nullptr) {
                 break;
             }
         }
 
-        effects->addRepaintFull();
+        KWin::effects->addRepaintFull();
     }
 
-    void LightlyShadersEffect::paintScreen(RenderTarget const& renderTarget, RenderViewport const& viewport, int mask, QRegion const& region, Output* s)
+    void LightlyShadersEffect::paintScreen(KWin::RenderTarget const& renderTarget, KWin::RenderViewport const& viewport, int mask, QRegion const& region, KWin::Output* s)
     {
         bool set_roundness = false;
 
@@ -205,24 +209,24 @@ namespace KWin {
             m_helper->reconfigure();
         }
 
-        effects->paintScreen(renderTarget, viewport, mask, region, s);
+        KWin::effects->paintScreen(renderTarget, viewport, mask, region, s);
     }
 
-    void LightlyShadersEffect::prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds time)
+    void LightlyShadersEffect::prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds time)
     {
         if (!isValidWindow(w)) {
-            effects->prePaintWindow(w, data, time);
+            KWin::effects->prePaintWindow(w, data, time);
             return;
         }
 
-        Output* s = w->screen();
-        if (effects->waylandDisplay() == nullptr) {
+        KWin::Output* s = w->screen();
+        if (KWin::effects->waylandDisplay() == nullptr) {
             s = nullptr;
         }
 
         QRectF const geo(w->frameGeometry());
         for (int corner = 0; corner < LSHelper::NTex; ++corner) {
-            QRegion reg = QRegion(scale(m_helper->m_maskRegions[corner]->boundingRect(), m_screens[s].scale).toRect());
+            QRegion reg = QRegion(scale(m_helper->maskedRegions[corner]->boundingRect(), m_screens[s].scale).toRect());
             switch (corner) {
             case LSHelper::TopLeft:
                 reg.translate(geo.x() - m_shadowOffset, geo.y() - m_shadowOffset);
@@ -243,10 +247,10 @@ namespace KWin {
             data.opaque -= reg;
         }
 
-        effects->prePaintWindow(w, data, time);
+        KWin::effects->prePaintWindow(w, data, time);
     }
 
-    bool LightlyShadersEffect::isValidWindow(EffectWindow* w)
+    bool LightlyShadersEffect::isValidWindow(KWin::EffectWindow* w)
     {
         if (!m_shader->isValid()
             || !m_windows[w].isManaged
@@ -256,23 +260,22 @@ namespace KWin {
         return true;
     }
 
-    void LightlyShadersEffect::drawWindow(RenderTarget const& renderTarget, RenderViewport const& viewport, EffectWindow* w, int mask, QRegion const& region, WindowPaintData& data)
+    void LightlyShadersEffect::drawWindow(KWin::RenderTarget const& renderTarget, KWin::RenderViewport const& viewport, KWin::EffectWindow* w, int mask, QRegion const& region, KWin::WindowPaintData& data)
     {
-        QRectF screen = viewport.renderRect().toRect();
+        QRectF const screen = viewport.renderRect().toRect();
 
         if (!isValidWindow(w) || (!screen.intersects(w->frameGeometry()) && !(mask & PAINT_WINDOW_TRANSFORMED))) {
-            effects->drawWindow(renderTarget, viewport, w, mask, region, data);
+            KWin::effects->drawWindow(renderTarget, viewport, w, mask, region, data);
             return;
         }
 
-        Output* s = w->screen();
-        if (effects->waylandDisplay() == nullptr) {
+        KWin::Output* s = w->screen();
+        if (KWin::effects->waylandDisplay() == nullptr) {
             s = nullptr;
         }
 
-        QRectF geo(w->frameGeometry());
-        QRectF exp_geo(w->expandedGeometry());
-        QRectF contents_geo(w->contentsRect());
+        QRectF const geo(w->frameGeometry());
+        QRectF const exp_geo(w->expandedGeometry());
 
         QRectF const geo_scaled = scale(geo, m_screens[s].scale);
         QRectF const exp_geo_scaled = scale(exp_geo, m_screens[s].scale);
@@ -291,7 +294,7 @@ namespace KWin {
         int const drawOuterOutlineLocation = m_shader->uniformLocation("draw_outer_outline");
         int const squircleRatioLocation = m_shader->uniformLocation("squircle_ratio");
         int const isSquircleLocation = m_shader->uniformLocation("is_squircle");
-        ShaderManager* sm = ShaderManager::instance();
+        KWin::ShaderManager* sm = KWin::ShaderManager::instance();
         sm->pushShader(m_shader.get());
 
         // qCWarning(LIGHTLYSHADERS) << geo_scaled.width() << geo_scaled.height();
@@ -299,11 +302,11 @@ namespace KWin {
         m_shader->setUniform(expandedSizeLocation, QVector2D(exp_geo_scaled.width(), exp_geo_scaled.height()));
         m_shader->setUniform(shadowSizeLocation, QVector3D(geo_scaled.x() - exp_geo_scaled.x(), geo_scaled.y() - exp_geo_scaled.y(), exp_geo_scaled.height() - geo_scaled.height() - geo_scaled.y() + exp_geo_scaled.y()));
         m_shader->setUniform(radiusLocation, m_screens[s].sizeScaled);
-        m_shader->setUniform(shadowOffsetLocation, float(m_shadowOffset * m_screens[s].scale));
+        m_shader->setUniform(shadowOffsetLocation, static_cast<float>(m_shadowOffset * m_screens[s].scale));
         m_shader->setUniform(innerOutlineColorLocation, QVector4D(m_innerOutlineColor.red() / 255.0, m_innerOutlineColor.green() / 255.0, m_innerOutlineColor.blue() / 255.0, m_innerOutlineColor.alpha() / 255.0));
         m_shader->setUniform(outerOutlineColorLocation, QVector4D(m_outerOutlineColor.red() / 255.0, m_outerOutlineColor.green() / 255.0, m_outerOutlineColor.blue() / 255.0, m_outerOutlineColor.alpha() / 255.0));
-        m_shader->setUniform(innerOutlineWidthLocation, float(m_innerOutlineWidth * m_screens[s].scale));
-        m_shader->setUniform(outerOutlineWidthLocation, float(m_outerOutlineWidth * m_screens[s].scale));
+        m_shader->setUniform(innerOutlineWidthLocation, static_cast<float>(m_innerOutlineWidth * m_screens[s].scale));
+        m_shader->setUniform(outerOutlineWidthLocation, static_cast<float>(m_outerOutlineWidth * m_screens[s].scale));
         m_shader->setUniform(drawInnerOutlineLocation, m_innerOutline);
         m_shader->setUniform(drawOuterOutlineLocation, m_outerOutline);
         m_shader->setUniform(squircleRatioLocation, m_squircleRatio);
@@ -316,16 +319,6 @@ namespace KWin {
         sm->popShader();
     }
 
-    QRectF LightlyShadersEffect::scale(QRectF const rect, qreal scaleFactor)
-    {
-        return QRectF(
-            rect.x() * scaleFactor,
-            rect.y() * scaleFactor,
-            rect.width() * scaleFactor,
-            rect.height() * scaleFactor
-        );
-    }
-
     bool LightlyShadersEffect::enabledByDefault()
     {
         return supported();
@@ -333,7 +326,7 @@ namespace KWin {
 
     bool LightlyShadersEffect::supported()
     {
-        return effects->openglContext() && effects->openglContext()->checkSupported() && effects->openglContext()->supportsBlits();
+        return KWin::effects->openglContext() && KWin::effects->openglContext()->checkSupported() && KWin::effects->openglContext()->supportsBlits();
     }
 } // namespace KWin
 

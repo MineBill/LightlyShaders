@@ -4,7 +4,7 @@
 #include "ui_lightlyshaders_config.h"
 #include <kcmodule.h>
 
-namespace KWin {
+namespace Lightly {
     class LightlyShadersKCM : public KCModule {
         Q_OBJECT
 
@@ -16,7 +16,7 @@ namespace KWin {
         void load() override;
         void defaults() override;
 
-        void updateChanged();
+        void updateChanged() const;
 
     private:
         void setChanged(bool value);

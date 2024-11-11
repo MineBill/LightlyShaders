@@ -25,39 +25,41 @@
 
 #include "lshelper.h"
 
-namespace KWin {
+namespace Lightly {
     class GLTexture;
 
-    class Q_DECL_EXPORT LightlyShadersEffect : public OffscreenEffect {
+    class Q_DECL_EXPORT LightlyShadersEffect : public KWin::OffscreenEffect {
         Q_OBJECT
 
     public:
         LightlyShadersEffect();
 
-        ~LightlyShadersEffect();
+        ~LightlyShadersEffect() override;
 
         static bool supported();
 
         static bool enabledByDefault();
 
-        void setRoundness(int const r, Output* s);
+        void setRoundness(int const r, KWin::Output* s);
         void reconfigure(ReconfigureFlags flags) override;
-        void paintScreen(RenderTarget const& renderTarget, RenderViewport const& viewport, int mask, QRegion const& region, Output* s) override;
-        void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds time) override;
-        void drawWindow(RenderTarget const& renderTarget, RenderViewport const& viewport, EffectWindow* w, int mask, QRegion const& region, WindowPaintData& data) override;
+        void paintScreen(KWin::RenderTarget const& renderTarget, KWin::RenderViewport const& viewport, int mask, QRegion const& region, KWin::Output* s) override;
+        void prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds time) override;
+        void drawWindow(KWin::RenderTarget const& renderTarget, KWin::RenderViewport const& viewport, KWin::EffectWindow* w, int mask, QRegion const& region, KWin::WindowPaintData& data) override;
 
         virtual int requestedEffectChainPosition() const override { return 99; }
 
     protected Q_SLOTS:
-        void windowAdded(EffectWindow* window);
-        void windowDeleted(EffectWindow* window);
-        void windowMaximizedStateChanged(EffectWindow* window, bool horizontal, bool vertical);
-        void windowFullScreenChanged(EffectWindow* window);
+        void windowAdded(KWin::EffectWindow* window);
+        void windowDeleted(KWin::EffectWindow* window);
+        void windowMaximizedStateChanged(KWin::EffectWindow* window, bool horizontal, bool vertical);
+        void windowFullScreenChanged(KWin::EffectWindow* window);
 
     private:
-        enum { Top = 0,
-               Bottom,
-               NShad };
+        enum {
+            Top = 0,
+            Bottom,
+            NShad
+        };
 
         struct LSWindowStruct {
             bool skipEffect;
@@ -70,11 +72,7 @@ namespace KWin {
             float sizeScaled;
         };
 
-        bool isValidWindow(EffectWindow* w);
-
-        void fillRegion(QRegion const& reg, QColor const& c);
-
-        QRectF scale(QRectF rect, qreal scaleFactor);
+        bool isValidWindow(KWin::EffectWindow* w);
 
         LSHelper* m_helper {};
 
@@ -87,11 +85,11 @@ namespace KWin {
         int m_cornersType {};
         bool m_innerOutline {}, m_outerOutline {}, m_darkTheme {}, m_disabledForMaximized {};
         QColor m_innerOutlineColor {}, m_outerOutlineColor {};
-        std::unique_ptr<GLShader> m_shader {};
+        std::unique_ptr<KWin::GLShader> m_shader {};
         QSize m_corner {};
 
-        std::unordered_map<Output*, LSScreenStruct> m_screens {};
-        QMap<EffectWindow*, LSWindowStruct> m_windows {};
+        std::unordered_map<KWin::Output*, LSScreenStruct> m_screens {};
+        QMap<KWin::EffectWindow*, LSWindowStruct> m_windows {};
     };
 } // namespace KWin
 
