@@ -1,0 +1,32 @@
+---
+BreakAfterAttributes: Leave
+AlignAfterOpenBracket: BlockIndent
+AllowAllArgumentsOnNextLine: true
+BracedInitializerIndentWidth: 4
+BinPackArguments: true
+AlignEscapedNewlines: Left
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+Cpp11BracedListStyle: false
+BasedOnStyle: WebKit
+BraceWrapping:
+  AfterFunction: true
+  SplitEmptyFunction: false
+BreakBeforeBraces: Custom
+BreakBeforeInheritanceComma: true
+BreakConstructorInitializers: BeforeComma
+IndentPPDirectives: AfterHash
+IndentRequiresClause: false
+InsertNewlineAtEOF: true
+LineEnding: LF
+NamespaceIndentation: All
+QualifierAlignment: Right
+RemoveSemicolon: true
+RequiresClausePosition: WithFollowing
+RequiresExpressionIndentation: OuterScope
+SpaceAfterTemplateKeyword: false
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '"*PCH.h"'
+    Priority: -1000
