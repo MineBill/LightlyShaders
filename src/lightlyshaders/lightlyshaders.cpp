@@ -263,8 +263,10 @@ namespace Lightly {
     void LightlyShadersEffect::drawWindow(KWin::RenderTarget const& renderTarget, KWin::RenderViewport const& viewport, KWin::EffectWindow* w, int mask, QRegion const& region, KWin::WindowPaintData& data)
     {
         QRectF const screen = viewport.renderRect().toRect();
+        QRectF const logicalGeometry = w->expandedGeometry();
+        bool hasInvalidSize = logicalGeometry.width() == 0 || logicalGeometry.height() == 0;
 
-        if (!isValidWindow(w) || (!screen.intersects(w->frameGeometry()) && !(mask & PAINT_WINDOW_TRANSFORMED))) {
+        if (hasInvalidSize || !isValidWindow(w) || (!screen.intersects(w->frameGeometry()) && !(mask & PAINT_WINDOW_TRANSFORMED))) {
             KWin::effects->drawWindow(renderTarget, viewport, w, mask, region, data);
             return;
         }
@@ -297,7 +299,6 @@ namespace Lightly {
         KWin::ShaderManager* sm = KWin::ShaderManager::instance();
         sm->pushShader(m_shader.get());
 
-        // qCWarning(LIGHTLYSHADERS) << geo_scaled.width() << geo_scaled.height();
         m_shader->setUniform(frameSizeLocation, QVector2D(geo_scaled.width(), geo_scaled.height()));
         m_shader->setUniform(expandedSizeLocation, QVector2D(exp_geo_scaled.width(), exp_geo_scaled.height()));
         m_shader->setUniform(shadowSizeLocation, QVector3D(geo_scaled.x() - exp_geo_scaled.x(), geo_scaled.y() - exp_geo_scaled.y(), exp_geo_scaled.height() - geo_scaled.height() - geo_scaled.y() + exp_geo_scaled.y()));
